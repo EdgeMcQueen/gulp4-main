@@ -1,7 +1,7 @@
 {
-  "name": "project",
+  "name": "gulp-main",
   "version": "1.0.0",
-  "description": "Фронтенд окружение",
+  "description": "Dev enviroment",
   "main": "index.html",
   "devDependencies": {
     "browser-sync": "^2.26.7",
@@ -19,13 +19,21 @@
     "gulp-uglifyjs": "^0.6.2",
     "smart-grid": "^2.1.2"
   },
-  "author": "ko2doo@github.com",
+  "author": "Enyone",
   "license": "ISC",
   "dependencies": {
     "aos": "^3.0.0-beta.6",
-    "font-awesome": "^4.7.0",
-    "jquery": "^3.4.1",
-    "normalize.css": "^8.0.1",
-    "slick-carousel": "^1.8.1"
-  }
+    "normalize.css": "^8.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SardorMutalov/gulp4-main.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SardorMutalov/gulp4-main/issues"
+  },
+  "homepage": "https://github.com/SardorMutalov/gulp4-main#readme"
 }
