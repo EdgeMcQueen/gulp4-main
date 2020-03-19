@@ -7,6 +7,7 @@ import gulp from "gulp";
 import gulpif from "gulp-if";
 import yargs from "yargs";
 import browsersync from "browser-sync";
+import plumber from "gulp-plumber";
 // таски для работы со скриптами
 import cleanJs from "gulp-terser";
 // таски для работы со стилями
@@ -14,6 +15,7 @@ import autoprefixer from "gulp-autoprefixer";
 import sass from "gulp-sass";
 import cleanCss from "gulp-clean-css";
 import gcmq from "gulp-group-css-media-queries";
+import sourcemaps from "gulp-sourcemaps";
 // таски для работы с изображениями
 import imagemin from "gulp-imagemin";
 import imageminPngquant from "imagemin-pngquant";
@@ -21,6 +23,8 @@ import imageminZopfli from "imagemin-zopfli";
 import imageminMozjpeg from "imagemin-mozjpeg";
 import imageminGiflossy from "imagemin-giflossy";
 import imageminWebp from "imagemin-webp";
+import webp from "gulp-webp";
+import favicons from "gulp-favicons";
 // проверка кода и валидаторы
 import htmlhint from "gulp-htmlhint";
 import htmlhintConfig from "htmlhint-htmlacademy";
@@ -94,21 +98,11 @@ browsersync.init({
 });
 
   gulp.watch(paths.markups.watch, markups);
-  gulp.watch(paths.styles.watch, sass);
+  gulp.watch(paths.styles.watch, styles);
   gulp.watch(paths.scripts.watch, scripts);
   gulp.watch(paths.images.watch, images);
   gulp.watch(paths.webp.watch, webpimages);
 };
-
-export const clean = () => gulp.src([
-  "./../*.html",
-  "./../css",
-  "./../fonts",
-  "./../img",
-  "./../js"
-],
- {read: false})
-	.pipe(del());
 
 export const serverConfig = () => gulp.src(paths.server_config.src)
 .pipe(gulp.dest(paths.server_config.dist));
@@ -147,7 +141,13 @@ export const smartGrid = cb => {
 	cb();
 };
 
-export const sass = () => gulp.src(paths.styles.src)
+// таск html
+export const markups = () => gulp.src(paths.markups.src)
+	.pipe(gulp.dest(paths.markups.dist))
+	.pipe(browsersync.stream());
+
+// таск стилей
+export const styles = () => gulp.src(paths.styles.src)
 	.pipe(gulpif(!production, sourcemaps.init()))
 	.pipe(plumber())
 	.pipe(sass())
@@ -155,7 +155,7 @@ export const sass = () => gulp.src(paths.styles.src)
 	.pipe(gulpif(production, autoprefixer({
 		browsers: ["last 12 versions", "> 1%", "ie 8", "ie 7"]
 	})))
-	.pipe(gulpif(production, mincss({
+	.pipe(gulpif(production, cleanCss({
 		compatibility: "ie8", level: {
 			1: {
 				specialComments: 0,
@@ -180,10 +180,82 @@ export const sass = () => gulp.src(paths.styles.src)
 	.pipe(gulp.dest(paths.styles.dist))
 	.pipe(browsersync.stream());
 
-export const dev = gulp.series(clean, smartGrid
-gulp.parallel(sass),
+// таск скриптов
+  export const scripts = () => gulp.src(paths.scripts.src)
+  	.pipe(webpackStream(webpackConfig), webpack)
+  	.pipe(gulpif(production, rename({
+  		suffix: ".min"
+  	})))
+  	.pipe(gulp.dest(paths.scripts.dist))
+	.pipe(browsersync.stream());
+
+// таск изображений
+  export const images = () => gulp.src(paths.images.src)
+  	.pipe(gulpif(production, imagemin([
+  		imageminGiflossy({
+  			optimizationLevel: 3,
+  			optimize: 3,
+  			lossy: 2
+  		}),
+  		imageminPngquant({
+  			speed: 5,
+  			quality: "30-50"
+  		}),
+  		imageminZopfli({
+  			more: true
+  		}),
+  		imageminMozjpeg({
+  			progressive: true,
+  			quality: 70
+  		}),
+  		imagemin.svgo({
+  			plugins: [
+  				{ removeViewBox: false },
+  				{ removeUnusedNS: false },
+  				{ removeUselessStrokeAndFill: false },
+  				{ cleanupIDs: false },
+  				{ removeComments: true },
+  				{ removeEmptyAttrs: true },
+  				{ removeEmptyText: true },
+  				{ collapseGroups: true }
+  			]
+  		})
+  	])))
+  	.pipe(gulp.dest(paths.images.dist))
+	.pipe(browsersync.stream());
+
+// таск webp изображений
+  export const webpimages = () => gulp.src(paths.webp.src)
+  	.pipe(webp(gulpif(production, imageminWebp({
+  		lossless: true,
+  		quality: 90,
+  		alphaQuality: 90
+  	}))))
+  	.pipe(gulp.dest(paths.webp.dist));
+
+//таск шрифтов
+  export const fonts = () => gulp.src(paths.fonts.src)
+  	.pipe(gulp.dest(paths.fonts.dist));
+
+// таск фавиконок
+  export const favicon = () => gulp.src(paths.favicons.src)
+  	.pipe(favicons({
+  		icons: {
+  			appleIcon: true,
+  			favicons: true,
+  			online: false,
+  			appleStartup: false,
+  			android: false,
+  			firefox: false,
+  			yandex: false,
+  			windows: false,
+  			coast: false
+  		}
+  	}))
+  	.pipe(gulp.dest(paths.favicons.dist))
+
+export const dev = gulp.series(smartGrid,
+gulp.parallel(markups, styles, scripts, images, webpimages, fonts, favicon),
 gulp.parallel(server));
 
-export const build = gulp.series();
-
-export default development;
+export default dev;
