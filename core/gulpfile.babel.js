@@ -13,7 +13,7 @@ import cleanJs from "gulp-terser";
 // таски для работы со стилями
 import autoprefixer from "gulp-autoprefixer";
 import sass from "gulp-sass";
-import cleanCss from "gulp-clean-css";
+import cleancss from "gulp-clean-css";
 import gcmq from "gulp-group-css-media-queries";
 import sourcemaps from "gulp-sourcemaps";
 // таски для работы с изображениями
@@ -46,19 +46,22 @@ const webpackConfig = require("./webpack.config.js"),
     src: [
       "./app/index.html"
     ],
-    dist: "./../",
+		devdist: "./app/",
+		builddist: "./../",
     watch: "./app/**/*.html"
   },
   styles: {
     src: "./app/scss/main.scss",
-    dist: "./../css",
+		devdist: "./app/css",
+		builddist: "./../css",
     watch: [
       "./app/scss/**/*.scss"
     ]
   },
   scripts: {
     src: "./app/js/index.js",
-    dist: "./../js/",
+		devdist: "./app/js",
+		builddist: "./../js",
     watch: [
       "./app/js/**/*.js"
     ]
@@ -69,33 +72,43 @@ const webpackConfig = require("./webpack.config.js"),
       "!./app/img/svg/*.svg",
       "!./app/img/favicon.{jpg,jpeg,png,gif}"
     ],
-    dist: "./../img/",
+		devdist: "./app/img",
+		builddist: "./../img",
     watch: "./app/img/**/*.{jpg,jpeg,png,gif,svg}"
   },
   webp: {
     src: "./app/img/**/*_webp.{jpg,jpeg,png}",
-    dist: "./../img/",
+		devdist: "./app/img",
+		builddist: "./../img",
     watch: "./app/img/**/*_webp.{jpg,jpeg,png}"
   },
   fonts: {
     src: "./app/fonts/**/*.{ttf,otf,woff,woff2}",
-    dist: "./../fonts/",
+		devdist: "./app/fonts",
+		builddist: "./../fonts",
     watch: "./app/fonts/**/*.{ttf,otf,woff,woff2}"
   },
   favicons: {
     src: "./app/img/favicon.{jpg,jpeg,png,gif}",
-    dist: "./../img/favicons/",
+		devdist: "./app/img/favicons",
+		builddist: "./../img/favicons",
   },
 };
 
 webpackConfig.mode = production ? "production" : "development";
 webpackConfig.devtool = production ? false : "cheap-eval-source-map";
 
-export const server = () => {
+export const devserver = () => {
 browsersync.init({
-  server: "./../",
+  server: "./app/",
   notify: false
 });
+
+// export const buildserver = () => {
+// browsersync.init({
+//   server: "./../",
+//   notify: false
+// });
 
   gulp.watch(paths.markups.watch, markups);
   gulp.watch(paths.styles.watch, styles);
@@ -143,7 +156,7 @@ export const smartGrid = cb => {
 
 // таск html
 export const markups = () => gulp.src(paths.markups.src)
-	.pipe(gulp.dest(paths.markups.dist))
+	.pipe(gulp.dest(paths.markups.devdist))
 	.pipe(browsersync.stream());
 
 // таск стилей
@@ -151,42 +164,53 @@ export const styles = () => gulp.src(paths.styles.src)
 	.pipe(gulpif(!production, sourcemaps.init()))
 	.pipe(plumber())
 	.pipe(sass())
+	.pipe(autoprefixer(['last 15 versions', '> 1%', 'ie 8', 'ie 7'], { cascade: true }))
 	.pipe(gcmq())
-	.pipe(gulpif(production, autoprefixer({
-		browsers: ["last 12 versions", "> 1%", "ie 8", "ie 7"]
-	})))
-	.pipe(gulpif(production, cleanCss({
-		compatibility: "ie8", level: {
-			1: {
-				specialComments: 0,
-				removeEmpty: true,
-				removeWhitespace: true
-			},
-			2: {
-				mergeMedia: true,
-				removeEmpty: true,
-				removeDuplicateFontRules: true,
-				removeDuplicateMediaBlocks: true,
-				removeDuplicateRules: true,
-				removeUnusedAtRules: false
-			}
-		}
-	})))
-	.pipe(gulpif(production, rename({
-		suffix: ".min"
-	})))
 	.pipe(plumber.stop())
-	.pipe(gulpif(!production, sourcemaps.write("./maps/")))
-	.pipe(gulp.dest(paths.styles.dist))
+	.pipe(gulp.dest(paths.styles.devdist))
 	.pipe(browsersync.stream());
+
+// таск минификации и создания карты
+	export const stylesmin = () => gulp.src(paths.styles.src)
+		.pipe(gulpif(!production, sourcemaps.init()))
+		.pipe(plumber())
+		.pipe(sass())
+		.pipe(autoprefixer(['last 15 versions', '> 1%', 'ie 8', 'ie 7'], { cascade: true }))
+		.pipe(gcmq())
+			.pipe(cleancss(
+				{
+				compatibility: "ie8", level: {
+					1: {
+						specialComments: 0,
+						removeEmpty: true,
+						removeWhitespace: true
+					},
+					2: {
+						mergeMedia: true,
+						removeEmpty: true,
+						removeDuplicateFontRules: true,
+						removeDuplicateMediaBlocks: true,
+						removeDuplicateRules: true,
+						removeUnusedAtRules: false
+					}
+				}
+			}
+		))
+			.pipe(rename({
+				suffix: ".min"
+			}))
+		.pipe(gulpif(!production, sourcemaps.write("./maps/")))
+		.pipe(plumber.stop())
+		.pipe(gulp.dest(paths.styles.devdist))
+		.pipe(browsersync.stream());
 
 // таск скриптов
   export const scripts = () => gulp.src(paths.scripts.src)
   	.pipe(webpackStream(webpackConfig), webpack)
-  	.pipe(gulpif(production, rename({
-  		suffix: ".min"
-  	})))
-  	.pipe(gulp.dest(paths.scripts.dist))
+  	// .pipe(gulpif(production, rename({
+  	// 	suffix: ".min"
+  	// })))
+  	.pipe(gulp.dest(paths.scripts.devdist))
 	.pipe(browsersync.stream());
 
 // таск изображений
@@ -221,7 +245,7 @@ export const styles = () => gulp.src(paths.styles.src)
   			]
   		})
   	])))
-  	.pipe(gulp.dest(paths.images.dist))
+  	.pipe(gulp.dest(paths.images.devdist))
 	.pipe(browsersync.stream());
 
 // таск webp изображений
@@ -231,11 +255,11 @@ export const styles = () => gulp.src(paths.styles.src)
   		quality: 90,
   		alphaQuality: 90
   	}))))
-  	.pipe(gulp.dest(paths.webp.dist));
+  	.pipe(gulp.dest(paths.webp.devdist));
 
 //таск шрифтов
   export const fonts = () => gulp.src(paths.fonts.src)
-  	.pipe(gulp.dest(paths.fonts.dist));
+  	.pipe(gulp.dest(paths.fonts.builddist));
 
 // таск фавиконок
   export const favicon = () => gulp.src(paths.favicons.src)
@@ -252,10 +276,45 @@ export const styles = () => gulp.src(paths.styles.src)
   			coast: false
   		}
   	}))
-  	.pipe(gulp.dest(paths.favicons.dist))
+  	.pipe(gulp.dest(paths.favicons.devdist))
+
+//---------------------------------------------//
+// продакшн сборка
+	// обработка html
+	// export const buildhtml = () => gulp.src(paths.markups.src)
+	// 	.pipe(gulp.dest('./../'))
+	// // таск для потсобработки стилей
+	// export const buildcss = () => gulp.src('./app/css/main.css')
+	// 	.pipe(cleancss(
+	// 		{
+	// 		compatibility: "ie8", level: {
+	// 			1: {
+	// 				specialComments: 0,
+	// 				removeEmpty: true,
+	// 				removeWhitespace: true
+	// 			},
+	// 			2: {
+	// 				mergeMedia: true,
+	// 				removeEmpty: true,
+	// 				removeDuplicateFontRules: true,
+	// 				removeDuplicateMediaBlocks: true,
+	// 				removeDuplicateRules: true,
+	// 				removeUnusedAtRules: false
+	// 			}
+	// 		}
+	// 	}
+	// ))
+	// 	.pipe(rename({
+	// 		suffix: ".min"
+	// 	}))
+	// 	.pipe(gulpif(!production, sourcemaps.write("./maps/")))
+	// .pipe(gulp.dest('./../css'))
+//---------------------------------------------//
 
 export const dev = gulp.series(smartGrid,
-gulp.parallel(markups, styles, scripts, images, webpimages, fonts, favicon),
-gulp.parallel(server));
+gulp.parallel(markups, styles, stylesmin, scripts, images, webpimages, fonts, favicon),
+gulp.parallel(devserver));
+
+// export const build = gulp.series(buildhtml, buildcss);
 
 export default dev;

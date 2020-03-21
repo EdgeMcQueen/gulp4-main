@@ -3,10 +3,6 @@
   "version": "1.0.0",
   "description": "gulp+webpack package manager",
   "main": "index.js",
-  "scripts": {
-    "build": "webpack --mode production",
-    "dev": "webpack-dev-server --mode development"
-  },
   "keywords": [],
   "author": "Sardor Mutalov",
   "license": "ISC",
@@ -14,10 +10,13 @@
     "@babel/core": "^7.8.7",
     "@babel/preset-env": "^7.8.7",
     "@babel/register": "^7.8.6",
+    "@htmlacademy/editorconfig-cli": "^1.0.0",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.0.6",
     "browser-sync": "^2.26.7",
     "del": "^5.1.0",
+    "editorconfig": "^0.15.3",
+    "editorconfig-cli": "^0.3.0",
     "eslint": "^6.8.0",
     "eslint-config-htmlacademy": "^0.5.2",
     "eslint-config-standard": "^14.1.0",
@@ -29,6 +28,7 @@
     "gulp-autoprefixer": "^7.0.1",
     "gulp-babel": "^8.0.0-beta.2",
     "gulp-clean-css": "^4.3.0",
+    "gulp-csso": "^4.0.1",
     "gulp-eslint": "^6.0.0",
     "gulp-favicons": "^2.4.0",
     "gulp-group-css-media-queries": "^1.2.2",
@@ -63,5 +63,21 @@
     "webpack-stream": "^5.2.1",
     "yargs": "^15.3.1"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "scripts": {
+    "build": "webpack --mode production",
+    "dev": "webpack-dev-server --mode development",
+    "test": "editorconfig-cli && stylelint ./app/scss/**/*.scss --syntax scss && eslint ./app/js",
+    "stylelint-fix": "stylelint ./app/scss/**/*.scss --fix --syntax scss",
+    "eslint-fix": "eslint ./app/js/** --fix",
+    "prettier": "prettier --write app/**/*.js"
+  },
+  "editorconfig-cli": [
+    "./app/*.html",
+    "*.json",
+    "./app/*.js",
+    "./app/js/**/*.js",
+    "./app/img/**/*.svg",
+    "./app/scss/**/*.{sass,scss}"
+  ]
 }

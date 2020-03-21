@@ -1,3 +1,8 @@
 core/app/source/**
 /.idea/**
 core/node_modules/**
+index.html
+/css/**
+/js/**
+/img/**
+/fonts/**

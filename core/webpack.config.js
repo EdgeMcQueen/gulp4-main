@@ -1,10 +1,10 @@
 const path = require("path");
 
 module.exports = {
-	output: {
-		filename: "index.js"
-	},
-
+  output: {
+    filename: 'index.js',
+    path: path.resolve(__dirname, 'app/js/'),
+  },
 	module: {
 		rules: [
 			{
@@ -20,5 +20,5 @@ module.exports = {
 				}
 			}
 		]
-	},
+	}
 };
